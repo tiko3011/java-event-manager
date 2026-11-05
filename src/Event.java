@@ -3,6 +3,8 @@ public class Event {
     private int seatCount;
     private int reservedSeatCount;
     private final Seat[] seats;
+    private final int eventId;
+    private static int eventCount = 0;
 
     public Event(String eventName, int seatCount){
         if (seatCount <= 0){
@@ -14,6 +16,8 @@ public class Event {
         this.eventName = eventName;
         this.seatCount = seatCount;
         this.reservedSeatCount = 0;
+        this.eventId = ++eventCount;
+
         seats = new Seat[seatCount];
 
         for(int i = 0; i < seatCount; i++){
@@ -83,10 +87,20 @@ public class Event {
     public int getSeatCount() {
         return seatCount;
     }
+    public int getEventCount() {
+        return eventCount;
+    }
+    public int getEventId(){
+        return eventId;
+    }
+    public int getReservedSeatCount(){
+        return reservedSeatCount;
+    }
 
     @Override
     public String toString() {
-        return "Event name: " + eventName + '\n'
+        return "Event ID: " + eventId + '\n'
+                + "Event name: " + eventName + '\n'
                 + "Seat count: " + seatCount + '\n'
                 + "Available Seats: " + (seatCount - reservedSeatCount) + '\n';
     }

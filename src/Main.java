@@ -12,12 +12,12 @@ public class Main {
         showMenu();
         int currentChoice;
 
-        while((currentChoice = makeChoice(scanner)) != 7){
+        while((currentChoice = makeChoice(scanner)) != 8){
             switch (currentChoice){
                 case 1:
                     currentEvent = createEventAction(scanner);
                     events.add(currentEvent);
-                    System.out.println("Event created");
+                    System.out.println("Event created. Event ID: " + currentEvent.getEventId());
                     break;
                 case 2:
                     reserveSeatAction(currentEvent, scanner);
@@ -33,6 +33,9 @@ public class Main {
                     break;
                 case 6:
                     currentEvent = listEventsAction(events, scanner);
+                    break;
+                case 7:
+                    listAvailableEventsAction(events);
                     break;
                 default:
                     System.out.println("Invalid choice. Try again.");
@@ -56,7 +59,8 @@ public class Main {
                         4. List Seats
                         5. List Reservations
                         6. Manage Events
-                        7. Exit
+                        7. List Available Events
+                        8. Exit
                         \nYour Choice:\s""");
     }
     public static int makeChoice(Scanner scanner){
@@ -112,9 +116,39 @@ public class Main {
 
     // Choice 2
     public static void reserveSeatAction(Event event, Scanner scanner){
+        Integer seatNumber = inputSeatNumber(event, scanner);
+        if(seatNumber == null){
+            return;
+        }
+
+        boolean isActionCompleted = event.reserveSeat(seatNumber);
+        if (isActionCompleted) {
+            System.out.println("Seat has been successfully reserved");
+        } else {
+            System.out.println("Seat is already reserved!");
+        }
+    }
+
+    // Choice 3
+    public static void cancelReservationAction(Event event, Scanner scanner){
+        Integer seatNumber = inputSeatNumber(event, scanner);
+        if(seatNumber == null){
+            return;
+        }
+
+        boolean isActionCompleted = event.cancelReservation(seatNumber);
+        if (isActionCompleted) {
+            System.out.println("Reservation has been successfully cancelled");
+        } else {
+            System.out.println("You do not have reservation to cancel!");
+        }
+    }
+
+    // Helper for Choice 2 and 3
+    public static Integer inputSeatNumber(Event event, Scanner scanner) {
         if(event == null){
             System.out.println("There is no active event!");
-            return;
+            return null;
         }
 
         boolean isNumberInvalid = true;
@@ -138,48 +172,7 @@ public class Main {
             }
         }
 
-        boolean isActionCompleted = event.reserveSeat(seatNumber);
-        if (isActionCompleted) {
-            System.out.println("Seat has been successfully reserved");
-        } else {
-            System.out.println("Seat is already reserved!");
-        }
-    }
-
-    // Choice 3
-    public static void cancelReservationAction(Event event, Scanner scanner){
-        if(event == null){
-            System.out.println("There is no active event!");
-            return;
-        }
-
-        boolean isNumberInvalid = true;
-        int seatNumber = 0;
-
-        while (isNumberInvalid){
-            System.out.print("Enter seat number: ");
-
-            try {
-                seatNumber = scanner.nextInt();
-                if(seatNumber <= 0 || seatNumber > event.getSeatCount()){
-                    scanner.nextLine();
-                    System.out.println("Invalid seat!\nTry again: ");
-                } else {
-                    isNumberInvalid = false;
-                }
-            }
-            catch(InputMismatchException e){
-                scanner.nextLine();
-                System.out.print("Invalid input!\nTry again: ");
-            }
-        }
-
-        boolean isActionCompleted = event.cancelReservation(seatNumber);
-        if (isActionCompleted) {
-            System.out.println("Reservation has been successfully cancelled");
-        } else {
-            System.out.println("You do not have reservation to cancel!");
-        }
+        return seatNumber;
     }
 
     // Choice 4
@@ -234,22 +227,60 @@ public class Main {
 
     // Go to event
     public static Event setEvent(List<Event> events, Scanner scanner){
-        int eventNumber = 0;
+        int eventId = 0;
+        boolean isEventIdInvalid = true;
 
-        while (eventNumber <= 0 || eventNumber > events.size()){
+        while (isEventIdInvalid){
             System.out.print("Choose Event to manage: ");
             try {
-                eventNumber = scanner.nextInt();
-                if(eventNumber <= 0 || eventNumber > events.size()){
-                    System.out.println("Invalid event!");
-                    scanner.nextLine();
+                eventId = scanner.nextInt();
+                for (Event event : events) {
+                    if (event.getEventId() == eventId) {
+                        isEventIdInvalid = false;
+                        System.out.println("You are now managing event with ID: " + eventId);
+                        return event;
+                    }
                 }
+                System.out.println("Invalid event!");
+                scanner.nextLine();
             } catch(InputMismatchException e){
                 System.out.println("Invalid input!");
                 scanner.nextLine();
             }
         }
 
-        return events.get(eventNumber - 1);
+        throw new IllegalArgumentException("Event with ID " + eventId + " does not exist.");
+    }
+
+    public static List<Event> getNotFullEvents(List<Event> events){
+        List<Event> notFullEvents = null;
+
+        for (Event event : events){
+            if (event.getSeatCount() - event.getReservedSeatCount() > 0){
+                if(notFullEvents == null){
+                    notFullEvents = new ArrayList<>();
+                }
+                notFullEvents.add(event);
+            }
+        }
+
+        return notFullEvents == null ? new ArrayList<>() : notFullEvents;
+    }
+
+    public static void listAvailableEventsAction(List<Event> events){
+        List<Event> notFullEvents = getNotFullEvents(events);
+
+        if (notFullEvents.isEmpty()){
+            System.out.println("There are no available events!");
+            return;
+        }
+
+        System.out.println("\n###################");
+        System.out.println("# Available Events #");
+        System.out.println("#####################\n");
+
+        for (Event event : notFullEvents) {
+            System.out.println(event);
+        }
     }
 }
